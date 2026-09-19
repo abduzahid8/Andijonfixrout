@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>RoadPulse — Report Potholes</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --app-bg: #0f172a; --app-section: #16213a; --app-text: #ffffff;
+    --app-hint: #94a3b8; --app-button: #dc2626; --app-button-text: #ffffff;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; margin: 0; overscroll-behavior: none; background: var(--app-bg); color: var(--app-text); }
+  #map { height: calc(100dvh - 136px); width: 100%; z-index: 0; }
+  body.native #map { height: calc(100dvh - 60px); }
+  body.native #actionBar { display: none; }
+  .pulse-red {
+    background: rgba(185, 28, 28, 0.9); border: 3px solid #fecaca; border-radius: 9999px;
+    box-shadow: 0 0 0 rgba(185,28,28,.6); animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(185,28,28,.55); }
+    70% { box-shadow: 0 0 0 16px rgba(185,28,28,0); }
+    100% { box-shadow: 0 0 0 0 rgba(185,28,28,0); }
+  }
+  .dot-orange { background: #c2410c; border: 2px solid #fed7aa; border-radius: 9999px; }
+  .dot-yellow { background: #ca8a04; border: 2px solid #fef08a; border-radius: 9999px; }
+  .dot-green { background: #15803d; border: 2px solid #bbf7d0; border-radius: 9999px; }
+  #loader { backdrop-filter: blur(4px); }
+  .spinner { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hist-thumb { width: 72px; height: 52px; object-fit: cover; border-radius: 10px; background: #0003; flex-shrink: 0; }
+</style>
+</head>
+<body class="font-sans select-none">
+
+<!-- Header: user + points + history -->
+<header class="flex items-center justify-between px-4 py-3 bg-[var(--app-section)]">
+  <div class="flex items-center gap-2 min-w-0">
+    <div class="w-9 h-9 rounded-full bg-[var(--app-button)] text-[var(--app-button-text)] flex items-center justify-center font-bold text-lg overflow-hidden shrink-0" id="avatar">R</div>
+    <div class="min-w-0">
+      <div class="text-sm font-semibold leading-tight truncate" id="userName">Road Reporter</div>
+      <div class="text-xs text-[var(--app-hint)]" id="gpsHint">Locating GPS…</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 shrink-0">
+    <button id="adminBtn" class="hidden h-9 px-3 rounded-full bg-[var(--app-button)] text-[var(--app-button-text)] text-sm font-bold" title="Admin dashboard">🛠 Admin</button>
+    <button id="historyBtn" class="w-9 h-9 rounded-full bg-black/20 font-bold" title="My reports">📋</button>
+    <div class="bg-black/20 rounded-full px-3 py-1.5 text-sm font-bold" id="pointsBadge">⭐️ 0</div>
+  </div>
+</header>
+
+<!-- Map -->
+<div id="map"></div>
+
+<!-- Bottom action sheet (browser fallback; hidden when Telegram MainButton is used) -->
+<div id="actionBar" class="fixed bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/70 to-transparent" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
+  <button id="reportBtn"
+    class="w-full py-4 rounded-2xl bg-[var(--app-button)] text-[var(--app-button-text)] font-extrabold text-lg shadow-xl">
+    📸 Take Photo / Report
+  </button>
+</div>
+
+<!-- Manual location modal -->
+<div id="pickModal" class="hidden fixed inset-0 z-[1000] bg-black/70 flex items-end justify-center p-4">
+  <div class="bg-[var(--app-section)] rounded-2xl p-5 w-full max-w-md">
+    <h3 class="font-bold text-lg mb-1">GPS unavailable</h3>
+    <p class="text-sm text-[var(--app-hint)] mb-4">Tap <b>“Pick on map”</b>, then tap anywhere on the map to set the defect location. Then choose a photo.</p>
+    <div class="flex gap-2">
+      <button id="pickModeBtn" class="flex-1 py-3 rounded-xl bg-[var(--app-button)] text-[var(--app-button-text)] font-bold">📍 Pick on map</button>
+      <button id="pickCancelBtn" class="flex-1 py-3 rounded-xl bg-black/25 font-bold">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- My reports sheet -->
+<div id="historySheet" class="hidden fixed inset-0 z-[1000] bg-black/70 flex items-end sm:items-center justify-center sm:p-4">
+  <div class="bg-[var(--app-section)] w-full sm:max-w-md max-h-[78dvh] rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-5 pt-4 pb-2">
+      <h3 class="font-bold text-lg">📋 My reports</h3>
+      <button id="historyClose" class="w-8 h-8 rounded-full bg-black/20 font-bold">✕</button>
+    </div>
+    <div id="historyList" class="overflow-y-auto px-4 pb-5 space-y-2"></div>
+  </div>
+</div>
+
+<!-- Full-screen AI loader -->
+<div id="loader" class="hidden fixed inset-0 z-[1100] bg-black/80 flex flex-col items-center justify-center gap-4">
+  <svg class="spinner w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+  </svg>
+  <div class="text-lg font-bold">AI is checking the road…</div>
+  <div class="text-sm text-[var(--app-hint)]">Gemini Vision is analysing your photo</div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden fixed top-4 inset-x-4 z-[1200] rounded-xl px-4 py-3 text-sm font-semibold text-center"></div>
+
+<input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" />
+<script src="./app.js"></script>
+</body>
+</html>

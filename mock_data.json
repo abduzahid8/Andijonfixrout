@@ -1,0 +1,29 @@
+{
+  "description": "Hackathon demo seed: 24 defects around Tashkent centre, 12 clustered on Amir Temur Avenue to force a red heatmap zone.",
+  "points": [
+    {"lat": 41.311081, "lng": 69.279562, "severity": "high", "defect_type": "pothole", "confidence_score": 0.95, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T08:00:00Z"},
+    {"lat": 41.31132, "lng": 69.27981, "severity": "high", "defect_type": "pothole", "confidence_score": 0.93, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T08:10:00Z"},
+    {"lat": 41.31155, "lng": 69.28002, "severity": "high", "defect_type": "pothole", "confidence_score": 0.91, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T08:20:00Z"},
+    {"lat": 41.31178, "lng": 69.28025, "severity": "medium", "defect_type": "crack", "confidence_score": 0.88, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T08:30:00Z"},
+    {"lat": 41.312, "lng": 69.2805, "severity": "high", "defect_type": "pothole", "confidence_score": 0.94, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T08:40:00Z"},
+    {"lat": 41.31222, "lng": 69.28072, "severity": "medium", "defect_type": "pothole", "confidence_score": 0.86, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T08:50:00Z"},
+    {"lat": 41.31085, "lng": 69.2793, "severity": "high", "defect_type": "manhole", "confidence_score": 0.9, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T09:00:00Z"},
+    {"lat": 41.3106, "lng": 69.27905, "severity": "medium", "defect_type": "crack", "confidence_score": 0.84, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T09:10:00Z"},
+    {"lat": 41.31038, "lng": 69.27882, "severity": "high", "defect_type": "pothole", "confidence_score": 0.92, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T09:20:00Z"},
+    {"lat": 41.31245, "lng": 69.28095, "severity": "medium", "defect_type": "pothole", "confidence_score": 0.83, "status": "in_review", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T09:30:00Z"},
+    {"lat": 41.31268, "lng": 69.28118, "severity": "low", "defect_type": "crack", "confidence_score": 0.78, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T09:40:00Z"},
+    {"lat": 41.3129, "lng": 69.2814, "severity": "high", "defect_type": "pothole", "confidence_score": 0.96, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T09:50:00Z"},
+    {"lat": 41.319, "lng": 69.24, "severity": "medium", "defect_type": "pothole", "confidence_score": 0.87, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T10:00:00Z"},
+    {"lat": 41.31935, "lng": 69.2404, "severity": "medium", "defect_type": "crack", "confidence_score": 0.82, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T10:10:00Z"},
+    {"lat": 41.31865, "lng": 69.2396, "severity": "low", "defect_type": "crack", "confidence_score": 0.75, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T10:20:00Z"},
+    {"lat": 41.3196, "lng": 69.2409, "severity": "high", "defect_type": "pothole", "confidence_score": 0.9, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T10:30:00Z"},
+    {"lat": 41.317, "lng": 69.284, "severity": "medium", "defect_type": "manhole", "confidence_score": 0.85, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T10:40:00Z"},
+    {"lat": 41.3173, "lng": 69.2845, "severity": "low", "defect_type": "crack", "confidence_score": 0.72, "status": "repaired", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-17T10:00:00Z"},
+    {"lat": 41.299, "lng": 69.275, "severity": "high", "defect_type": "pothole", "confidence_score": 0.93, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T11:00:00Z"},
+    {"lat": 41.2994, "lng": 69.2755, "severity": "medium", "defect_type": "pothole", "confidence_score": 0.81, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T11:10:00Z"},
+    {"lat": 41.33, "lng": 69.26, "severity": "medium", "defect_type": "crack", "confidence_score": 0.8, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T11:20:00Z"},
+    {"lat": 41.3304, "lng": 69.2605, "severity": "low", "defect_type": "other", "confidence_score": 0.7, "status": "in_review", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T11:30:00Z"},
+    {"lat": 41.305, "lng": 69.269, "severity": "low", "defect_type": "crack", "confidence_score": 0.74, "status": "repaired", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-17T12:00:00Z"},
+    {"lat": 41.3155, "lng": 69.2512, "severity": "medium", "defect_type": "pothole", "confidence_score": 0.86, "status": "active", "image_url": "/media/uploads/mock.jpg", "created_at": "2026-09-18T11:40:00Z"}
+  ]
+}

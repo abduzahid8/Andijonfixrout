@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RoadPulse — Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<style>
+  #map { height: 520px; border-radius: 1rem; z-index: 0; }
+  @media (min-width: 1536px) { #map { height: 620px; } }
+  .thumb { width: 96px; height: 64px; object-fit: cover; border-radius: 8px; background: #1e293b; }
+  .badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+<div class="max-w-[1600px] mx-auto p-4 md:p-8">
+
+  <header class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-extrabold">🛣️ RoadPulse <span class="text-red-500">Admin</span></h1>
+      <p class="text-slate-400 text-sm">City road-defect monitoring · Tashkent · MVP 1.0</p>
+    </div>
+    <div class="flex items-center gap-2 text-sm">
+      <span id="liveDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+      <span id="updatedAt" class="text-slate-400">loading…</span>
+      <button id="refreshBtn" class="ml-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold">↻ Refresh</button>
+      <a href="/client/" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 font-bold">📱 Mini App</a>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <div class="text-xs text-slate-400 uppercase font-bold">Total defects</div>
+      <div class="text-3xl font-extrabold" id="statTotal">–</div>
+    </div>
+    <div class="bg-slate-900 border border-red-900/60 rounded-2xl p-4">
+      <div class="text-xs text-red-400 uppercase font-bold">High-risk potholes</div>
+      <div class="text-3xl font-extrabold text-red-400" id="statHigh">–</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <div class="text-xs text-slate-400 uppercase font-bold">Repaired</div>
+      <div class="text-3xl font-extrabold text-emerald-400" id="statRepaired">–</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <div class="text-xs text-slate-400 uppercase font-bold">In review (AI &lt; 0.65)</div>
+      <div class="text-3xl font-extrabold text-amber-400" id="statReview">–</div>
+    </div>
+  </section>
+
+  <section class="grid lg:grid-cols-3 gap-4 mb-6">
+    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-bold">🔥 Pothole heatmap</h2>
+        <label class="text-xs text-slate-400 flex items-center gap-2">
+          <input type="checkbox" id="heatToggle" checked class="accent-red-500" /> heat layer
+          <input type="checkbox" id="markerToggle" checked class="accent-red-500" /> markers
+        </label>
+      </div>
+      <div id="map"></div>
+      <p class="text-xs text-slate-500 mt-2">Red zones = highest concentration. Amir Temur Ave cluster is the demo hot zone.</p>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <h2 class="font-bold mb-3">🚨 Critical zones</h2>
+      <div id="zones" class="space-y-2 text-sm"><p class="text-slate-500">loading…</p></div>
+      <h2 class="font-bold mt-6 mb-3">📊 Severity mix</h2>
+      <div id="severityMix" class="space-y-2 text-sm"><p class="text-slate-500">loading…</p></div>
+    </div>
+  </section>
+
+  <!-- Table -->
+  <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h2 class="font-bold">📋 Latest reports</h2>
+      <select id="statusFilter" class="bg-slate-800 rounded-lg px-3 py-2 text-sm">
+        <option value="">all statuses</option>
+        <option value="active">active</option>
+        <option value="in_review">in_review</option>
+        <option value="repaired">repaired</option>
+      </select>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-400 text-xs uppercase">
+            <th class="p-2">Photo</th><th class="p-2">Location</th><th class="p-2">Type</th>
+            <th class="p-2">Severity</th><th class="p-2">Pit</th><th class="p-2">Status</th><th class="p-2">Priority</th><th class="p-2">AI conf.</th><th class="p-2">Created</th><th class="p-2">Action</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script src="./dashboard.js"></script>
+</body>
+</html>
