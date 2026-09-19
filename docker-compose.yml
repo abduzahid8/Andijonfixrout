@@ -1,0 +1,28 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/roadpulse.db
+      MEDIA_DIR: /data/uploads
+    volumes:
+      - roadpulse-data:/data
+
+  bot:
+    build: .
+    command: ["python", "run_bot.py"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////data/roadpulse.db
+      MEDIA_DIR: /data/uploads
+    volumes:
+      - roadpulse-data:/data
+    depends_on:
+      - api
+
+volumes:
+  roadpulse-data:

@@ -66,9 +66,20 @@ mock_data.json    24 demo points · init_db.py [--reset] seeds them
 
 ```bash
 pip install -r backend/requirements-dev.txt
-ruff check backend init_db.py   # lint
-pytest                          # tests
+ruff check backend init_db.py run_bot.py   # lint
+pytest                                      # tests (uploads go to a tmp dir)
 ```
+
+CI (`.github/workflows/ci.yml`) runs lint + tests on every push/PR.
+
+## Deploy with Docker
+
+```bash
+docker compose up --build   # API on :8000, bot polling, data in a volume
+```
+
+Needs `.env` with `TELEGRAM_BOT_TOKEN` / `MINI_APP_URL` next to the compose file.
+Point Telegram at `https://<your-host>/client/` afterwards.
 
 ## Telegram Mini App
 

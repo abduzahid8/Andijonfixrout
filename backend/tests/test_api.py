@@ -154,3 +154,39 @@ def test_pit_grading_and_priority():
     assert data["pit_category"] == "medium"
     assert data["repair_priority"] == "scheduled"
     assert data["diameter_cm"] == 30.0 and data["depth_cm"] == 4.0
+
+
+def test_normalise_pit_verdict():
+    from app.ai_service import normalise_verdict
+
+    pothole = normalise_verdict(
+        {
+            "is_road": True,
+            "has_defect": True,
+            "defect_type": "pothole",
+            "severity": "HIGH",
+            "pit_category": "LARGE",
+            "diameter_cm": "55",
+            "depth_cm": -3,
+            "confidence_score": 1.4,
+            "description": "x",
+        }
+    )
+    assert pothole["pit_category"] == "large"
+    assert pothole["diameter_cm"] == 55.0
+    assert pothole["depth_cm"] is None  # negative estimate rejected
+    assert pothole["confidence_score"] == 1.0
+
+    crack = normalise_verdict(
+        {
+            "is_road": True,
+            "has_defect": True,
+            "defect_type": "crack",
+            "severity": "low",
+            "pit_category": "large",  # cracks have no pit category
+            "diameter_cm": 40,
+            "confidence_score": 0.8,
+        }
+    )
+    assert crack["pit_category"] == "none"
+    assert crack["diameter_cm"] is None

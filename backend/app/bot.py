@@ -25,7 +25,7 @@ from telegram.ext import (
 
 from .ai_service import analyze_image
 from .config import settings
-from .database import SessionLocal
+from .database import Base, SessionLocal, engine, ensure_migrations
 from .models import User
 from .reports_service import finalize_report
 from .storage import save_upload
@@ -206,5 +206,7 @@ def build_app() -> Application:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
+    Base.metadata.create_all(bind=engine)  # bot may boot before the API server
+    ensure_migrations()
     log.info("Starting bot polling, mini_app_url=%s", settings.MINI_APP_URL)
     build_app().run_polling(allowed_updates=Update.ALL_TYPES)

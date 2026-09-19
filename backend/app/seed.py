@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from .ai_service import repair_priority_for
 from .config import BASE_DIR
 from .models import Report, User
+from .storage import ensure_demo_photo
 
 DEMO_USER_ID = 999_000_001
 FALLBACK_IMAGE = "/media/uploads/mock.jpg"
@@ -46,6 +47,7 @@ def seed_database(db: Session, *, reset: bool = False) -> int:
         return 0
 
     points = load_mock_points()
+    ensure_demo_photo("mock.jpg")  # demo rows reference this file
     demo = db.get(User, DEMO_USER_ID)
     if demo is None:
         demo = User(id=DEMO_USER_ID, username="demo_city", first_name="City")
