@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # Game / AI thresholds
     CONFIDENCE_THRESHOLD: float = 0.65
     POINTS_PER_REPORT: int = 10
+    # Confirming an already-mapped pit (duplicate) earns less than a new one.
+    CONFIRM_POINTS: int = 2
+    # Reports closer than this are treated as the same pit.
+    DUPLICATE_RADIUS_M: float = 30.0
 
     # Rate limiting: max reports per user per rolling window
     RATE_LIMIT_REPORTS: int = 20

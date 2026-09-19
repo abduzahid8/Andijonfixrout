@@ -48,6 +48,8 @@ class Report(Base):
     repair_priority: Mapped[str] = mapped_column(
         String(16), nullable=False, default="scheduled"
     )
+    # How many other users confirmed this same pit.
+    confirmations: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     confidence_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     # active | in_review | repaired
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active", index=True)

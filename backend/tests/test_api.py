@@ -94,7 +94,7 @@ def test_unsupported_mime_rejected():
 
 
 def test_user_report_history():
-    res = _upload(user_id=504)
+    res = _upload(user_id=504, lat=41.32)
     assert res.status_code == 201
     rid = res.json()["data"]["report_id"]
     history = client.get("/api/v1/users/504/reports").json()["reports"]
@@ -102,7 +102,7 @@ def test_user_report_history():
 
 
 def test_admin_promote_and_flag():
-    _upload(user_id=505)
+    _upload(user_id=505, lat=41.33)
     assert client.get("/api/v1/users/505").json()["is_admin"] is False
     res = client.patch("/api/v1/admin/users/505", json={"is_admin": True})
     assert res.json() == {"id": 505, "is_admin": True}
@@ -148,7 +148,7 @@ def test_pit_grading_and_priority():
     assert repair_priority_for("low", "small") == "routine"
     assert repair_priority_for("low", "none") == "routine"
 
-    res = _upload(user_id=507)
+    res = _upload(user_id=507, lat=41.34)
     assert res.status_code == 201
     data = res.json()["data"]
     assert data["pit_category"] == "medium"
@@ -190,3 +190,52 @@ def test_normalise_pit_verdict():
     )
     assert crack["pit_category"] == "none"
     assert crack["diameter_cm"] is None
+
+
+def test_duplicate_confirm_and_leaderboard():
+    first = _upload(user_id=601, lat=41.4, lng=69.3)
+    assert first.status_code == 201
+    rid = first.json()["data"]["report_id"]
+    second = _upload(user_id=602, lat=41.4001, lng=69.3001)  # ~15 m away
+    assert second.status_code == 201
+    data = second.json()["data"]
+    assert data["duplicate"] is True and data["duplicate_of"] == rid
+    assert data["points_awarded"] == 2
+    assert isinstance(data["message"], str)
+
+    leaders = client.get("/api/v1/users/leaderboard?limit=50").json()["leaders"]
+    assert leaders == sorted(leaders, key=lambda row: -row["points"])
+    assert any(row["id"] == 601 for row in leaders)
+
+
+def test_emergency_finder():
+    from datetime import datetime, timedelta
+
+    from app.bot import find_unalerted_emergencies
+    from app.reports_service import finalize_report
+
+    db = TestingSession()
+    try:
+        out = finalize_report(
+            db,
+            user_id=603,
+            username=None,
+            first_name="Em",
+            image_url="/media/uploads/e.jpg",
+            latitude=41.5,
+            longitude=69.4,
+            verdict={
+                "is_road": True, "has_defect": True, "defect_type": "pothole",
+                "severity": "high", "pit_category": "large",
+                "confidence_score": 0.95, "description": "t",
+            },
+        )
+        assert out["repair_priority"] == "emergency"
+        rid = out["report"].id
+        window_start = datetime.utcnow() - timedelta(minutes=15)
+        fresh = find_unalerted_emergencies(db, window_start, set())
+        assert any(r.id == rid for r in fresh)
+        muted = find_unalerted_emergencies(db, window_start, {rid})
+        assert all(r.id != rid for r in muted)
+    finally:
+        db.close()

@@ -50,6 +50,10 @@ def ensure_migrations() -> None:
                 "ALTER TABLE reports ADD COLUMN repair_priority VARCHAR(16)"
                 " DEFAULT 'scheduled'"
             )
+        if "confirmations" not in report_cols:
+            conn.exec_driver_sql(
+                "ALTER TABLE reports ADD COLUMN confirmations INTEGER DEFAULT 0"
+            )
         conn.exec_driver_sql(
             "UPDATE reports SET pit_category='large' "
             "WHERE severity='high' AND pit_category='medium'"

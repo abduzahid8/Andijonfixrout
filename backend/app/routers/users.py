@@ -1,4 +1,4 @@
-"""User profile + per-user report history (powers the Mini App header/sheet)."""
+"""User profile, leaderboard, and per-user report history (Mini App data)."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,6 +11,29 @@ from ..schemas import UserOut
 from ..utils import isoformat_z
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/leaderboard")
+def leaderboard(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.execute(select(User).order_by(User.points.desc(), User.created_at).limit(limit))
+        .scalars()
+        .all()
+    )
+    return {
+        "leaders": [
+            {
+                "id": u.id,
+                "first_name": u.first_name,
+                "username": u.username,
+                "points": u.points,
+            }
+            for u in rows
+        ]
+    }
 
 
 @router.get("/{telegram_id}", response_model=UserOut)

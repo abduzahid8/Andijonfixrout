@@ -19,6 +19,8 @@ class ReportCreateResponse(BaseModel):
     diameter_cm: float | None = None
     depth_cm: float | None = None
     points_awarded: int
+    duplicate: bool = False
+    duplicate_of: str | None = None
     status: ReportStatus
     message: str
 

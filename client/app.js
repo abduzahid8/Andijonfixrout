@@ -242,6 +242,7 @@ function historyRow(x) {
 
 async function openHistory() {
   tg?.HapticFeedback?.impactOccurred('light');
+  $('sheetTitle').textContent = '📋 My reports';
   historySheet.classList.remove('hidden');
   syncBackButton();
   const list = $('historyList');
@@ -262,6 +263,41 @@ async function openHistory() {
   }
 }
 $('historyBtn').onclick = openHistory;
+$('leadersBtn').onclick = openLeaders;
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function leaderRow(l, i) {
+  const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
+  const name = esc((l.first_name || 'Road') + (l.username ? ' @' + l.username : '') + (l.id === USER_ID ? ' · you' : ''));
+  return `
+    <div class="flex items-center gap-3 bg-black/20 rounded-2xl p-2.5">
+      <div class="text-xl w-8 text-center shrink-0">${medal}</div>
+      <div class="text-sm font-bold truncate flex-1">${name}</div>
+      <div class="text-sm font-bold shrink-0">⭐️ ${l.points}</div>
+    </div>`;
+}
+
+async function openLeaders() {
+  tg?.HapticFeedback?.impactOccurred('light');
+  $('sheetTitle').textContent = '🏆 Top reporters';
+  historySheet.classList.remove('hidden');
+  syncBackButton();
+  const list = $('historyList');
+  list.innerHTML = '<p class="text-sm opacity-60 text-center py-6">Loading…</p>';
+  try {
+    const res = await fetch(`${API}/users/leaderboard?limit=10`);
+    const { leaders } = await res.json();
+    list.innerHTML = leaders.length
+      ? leaders.map(leaderRow).join('')
+      : '<p class="text-sm opacity-60 text-center py-6">No reporters yet.</p>';
+  } catch (e) {
+    console.warn('leaders failed', e);
+    list.innerHTML = '<p class="text-sm opacity-60 text-center py-6">Offline — could not load.</p>';
+  }
+}
 
 // Downscale huge photos before upload (slow networks, 10 MB server limit).
 async function preparePhoto(file) {

@@ -4,7 +4,9 @@ Long-polling entrypoint is `python run_bot.py` (repo root).
 Requires TELEGRAM_BOT_TOKEN in .env.
 """
 import logging
+from datetime import datetime, timedelta
 
+from sqlalchemy import select
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -26,7 +28,7 @@ from telegram.ext import (
 from .ai_service import analyze_image
 from .config import settings
 from .database import Base, SessionLocal, engine, ensure_migrations
-from .models import User
+from .models import Report, User
 from .reports_service import finalize_report
 from .storage import save_upload
 
@@ -170,6 +172,12 @@ async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     finally:
         db.close()
     report = out["report"]
+    if out.get("duplicate"):
+        await update.message.reply_text(
+            f"📍 Already on the map — thanks for confirming! (+{out['points']} ⭐️).",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
     await update.message.reply_text(
         f"✅ Recorded: *{report.defect_type}* ({report.severity}, +{out['points']} ⭐️).\n"
         "Thanks — it is now on the city map.",
@@ -187,6 +195,60 @@ async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     log.exception("handler error: %s", context.error)
 
 
+# ---- Emergency alerts: ping every admin when a severe pit lands ----
+ALERTED: set[str] = set()
+ALERT_WINDOW_MIN = 15
+
+
+def find_unalerted_emergencies(db, since, exclude_ids: set[str]) -> list[Report]:
+    rows = (
+        db.execute(
+            select(Report)
+            .where(
+                Report.repair_priority == "emergency",
+                Report.status == "active",
+                Report.created_at >= since,
+            )
+            .order_by(Report.created_at)
+        )
+        .scalars()
+        .all()
+    )
+    return [r for r in rows if r.id not in exclude_ids]
+
+
+async def alert_sweep(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Job-queue task: notify all admins about fresh emergency pits."""
+    from sqlalchemy import select
+
+    # SQLite stores naive datetimes — compare with naive UTC.
+    since = datetime.utcnow() - timedelta(minutes=ALERT_WINDOW_MIN)
+    db = SessionLocal()
+    try:
+        fresh = find_unalerted_emergencies(db, since, ALERTED)
+        if not fresh:
+            return
+        admins = db.execute(select(User).where(User.is_admin)).scalars().all()
+    finally:
+        db.close()
+    for report in fresh:
+        ALERTED.add(report.id)
+        size = f" (~{report.diameter_cm} cm)" if report.diameter_cm else ""
+        text = (
+            "🚨 *EMERGENCY pit* just reported!\n"
+            f"{report.defect_type} · {report.pit_category}{size}\n"
+            f"📍 {report.latitude:.5f}, {report.longitude:.5f}\n"
+            "Open the dashboard to dispatch a crew."
+        )
+        for admin in admins:
+            try:
+                await context.bot.send_message(
+                    chat_id=admin.id, text=text, parse_mode="Markdown"
+                )
+            except Exception as exc:
+                log.warning("alert to %s failed: %s", admin.id, exc)
+
+
 def build_app() -> Application:
     if not settings.TELEGRAM_BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is empty — add your BotFather token to .env")
@@ -199,6 +261,8 @@ def build_app() -> Application:
     app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
     app.add_handler(MessageHandler(filters.LOCATION, location_handler))
     app.add_error_handler(on_error)
+    if app.job_queue is not None:
+        app.job_queue.run_repeating(alert_sweep, interval=30, first=10)
     return app
     app.add_handler(CallbackQueryHandler(points_callback, pattern="^points$"))
     return app

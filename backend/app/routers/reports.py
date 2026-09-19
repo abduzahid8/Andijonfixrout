@@ -88,10 +88,16 @@ async def create_report(
             "diameter_cm": report.diameter_cm,
             "depth_cm": report.depth_cm,
             "points_awarded": points,
+            "duplicate": out.get("duplicate", False),
+            "duplicate_of": out.get("duplicate_of"),
             "message": (
-                "Pothole successfully recorded and added to the map."
-                if verified
-                else "Report saved for manual review (low AI confidence)."
+                "Already on the map — thanks for confirming!"
+                if out.get("duplicate")
+                else (
+                    "Pothole successfully recorded and added to the map."
+                    if verified
+                    else "Report saved for manual review (low AI confidence)."
+                )
             ),
         },
     }

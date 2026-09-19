@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .ai_service import repair_priority_for, to_storage_defect, to_storage_severity
 from .config import settings
-from .crud import award_points, get_or_create_user
+from .crud import award_points, find_nearby_report, get_or_create_user
 from .models import Report
 
 
@@ -29,6 +29,26 @@ def finalize_report(
     points = settings.POINTS_PER_REPORT if verified else 0
 
     user = get_or_create_user(db, user_id, username, first_name)
+
+    # Same pit already mapped? Confirm it (+small reward) instead of duplicating.
+    nearby = find_nearby_report(db, latitude, longitude, settings.DUPLICATE_RADIUS_M)
+    if nearby is not None:
+        nearby.confirmations = (nearby.confirmations or 0) + 1
+        award_points(user, settings.CONFIRM_POINTS)
+        db.commit()
+        db.refresh(nearby)
+        return {
+            "report": nearby,
+            "user": user,
+            "verified": False,
+            "points": settings.CONFIRM_POINTS,
+            "status": nearby.status,
+            "pit_category": nearby.pit_category,
+            "repair_priority": nearby.repair_priority,
+            "duplicate": True,
+            "duplicate_of": nearby.id,
+        }
+
     award_points(user, points)
 
     storage_defect = to_storage_defect(verdict.get("defect_type", "none"), True)
@@ -67,4 +87,6 @@ def finalize_report(
         "status": status,
         "pit_category": pit_category,
         "repair_priority": repair_priority,
+        "duplicate": False,
+        "duplicate_of": None,
     }
